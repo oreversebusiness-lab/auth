@@ -30,14 +30,19 @@ function SignInInner() {
     const { error: err } = await authClient.signIn.email({ email, password })
     setLoading(false)
     if (err) { setError(err.message || "Invalid credentials"); return }
-    router.push(redirectTo)
-    router.refresh()
+    if (isDauth) {
+      window.location.href = redirectTo
+    } else {
+      router.push(redirectTo)
+      router.refresh()
+    }
   }
 
   async function handleSocialSignIn(provider: "google" | "github") {
     setError("")
     setSocialLoading(provider)
-    const { error: err } = await authClient.signIn.social({ provider, callbackURL: redirectTo })
+    const cb = isDauth ? window.location.origin + redirectTo : redirectTo
+    const { error: err } = await authClient.signIn.social({ provider, callbackURL: cb })
     setSocialLoading(null)
     if (err) setError(err.message || "Social sign-in failed")
   }

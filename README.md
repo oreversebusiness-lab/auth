@@ -12,6 +12,7 @@ Centralized authentication service for the OreVerse ecosystem. One login, access
 - **Admin panel** — User role management and integration code generation
 - **Dark mode** — Full dark theme support
 
+
 ## Architecture
 
 ```

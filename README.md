@@ -1,36 +1,143 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OreVerse SSO
+
+Centralized authentication service for the OreVerse ecosystem. One login, access all projects.
+
+## Features
+
+- **Email/Password auth** — Standard sign-in/sign-up
+- **Social login** — Google and GitHub OAuth
+- **SSO Widget** — Drop-in script tag for instant auth on any page
+- **Direct Auth** — Full-control auth flow with JWT tokens
+- **OAuth 2.0 Apps** — Create and manage registered applications
+- **Admin panel** — User role management and integration code generation
+- **Dark mode** — Full dark theme support
+
+## Architecture
+
+```
+User's Browser
+     │
+     ├─ SSO Widget (<script src=".../sso/widget">)
+     │    └─ Checks session via /api/auth/session-check
+     │       ├─ Logged in → shows profile, auto-authenticates
+     │       └─ Not logged in → shows sign-in button
+     │
+     ├─ Direct Auth (/api/dauth?ref=project)
+     │    └─ Generates JWT → project verifies → SSO POSTs user data → project creates session
+     │
+     └─ OAuth 2.0 (registered apps)
+          └─ Uses client_id + client_secret for authorization
+```
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Auth:** Better Auth v1.6 with Drizzle adapter
+- **Database:** PostgreSQL (Neon)
+- **Styling:** Tailwind CSS
+- **JWT:** jose
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL database (Neon, local, or any provider)
+
+### Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Clone the repo
+git clone https://github.com/oreverse/auth.git
+cd auth
+
+# 2. Install dependencies
+npm install
+
+# 3. Copy environment file and fill in values
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Edit `.env` with your configuration (see [Environment Variables](#environment-variables) below).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# 4. Push database schema
+npm run db:push
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 5. Run the development server
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000).
 
-To learn more about Next.js, take a look at the following resources:
+### Commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run lint` | Run ESLint |
+| `npm run db:push` | Push Drizzle schema to database |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Environment Variables
 
-## Deploy on Vercel
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `BETTER_AUTH_SECRET` | Yes | Secret key for JWT (min 32 chars) |
+| `BETTER_AUTH_URL` | Yes | Base URL (e.g. `http://localhost:3000`) |
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `GITHUB_CLIENT_ID` | No | GitHub OAuth App client ID |
+| `GITHUB_CLIENT_SECRET` | No | GitHub OAuth App client secret |
+| `GOOGLE_CLIENT_ID` | No | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
+| `ALLOWED_ORIGINS` | No | CORS origins (`*` for all) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Integration Guide
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See the full **[Integration Guide](/docs/sso-integration)** for detailed documentation on:
+
+- **SSO Widget** — 1-line drop-in auth
+- **Direct Auth** — Button + backend flow with JWT
+- **OAuth 2.0** — Registered app authentication
+- **API Reference** — All available endpoints
+
+## Project Structure
+
+```
+app/
+├── (auth)/sign-in/       # Sign-in page
+├── (auth)/sign-up/       # Sign-up page
+├── api/
+│   ├── auth/[...all]/    # Better Auth API
+│   ├── auth/session-check/ # CORS session check
+│   ├── auth/set-role/    # Admin role promotion
+│   ├── dauth/            # Direct Auth JWT generator
+│   ├── oauth/            # OAuth apps CRUD
+│   └── user/login/dauth/ # Direct Auth user data delivery
+├── dashboard/            # Admin/user dashboard
+├── demo-project/         # Live widget demo
+├── docs/sso-integration/ # Integration guide
+└── sso/widget/           # SSO widget script
+
+lib/
+├── auth.ts               # Better Auth configuration
+├── auth-client.ts        # Client-side auth client
+└── auth-helpers.ts       # Server-side helpers
+
+db/
+├── db.ts                 # Database connection + schema merge
+├── schema.ts             # OAuth app schema
+└── auth-schema.ts        # Auth tables schema
+
+examples/direct-auth/     # Example project integration code
+```
+
+## Examples
+
+The `examples/` directory contains ready-to-copy code for integrating external projects:
+
+- `examples/direct-auth/` — Button, `/api/dauth`, and `/api/login/dauth` routes
+
+## License
+
+MIT
